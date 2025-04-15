@@ -1,183 +1,165 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Media Downloader</title>
-    <meta charset="UTF-8">
-    <style>
-        /* Eric Meyer's Reset CSS v2.0 */
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
-  vertical-align: baseline;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media Downloader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-/* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
-footer, header, hgroup, menu, nav, section {
-  display: block;
-}
+  <style>
+    /* Reset CSS */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  line-height: 1;
-}
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #d7eaff, #ffffff);
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-ol, ul {
-  list-style: none;
-}
+    .container {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
 
-blockquote, q {
-  quotes: none;
-}
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 28px;
+      color: #333;
+    }
 
-blockquote::before, blockquote::after,
-q::before, q::after {
-  content: '';
-  content: none;
-}
+    h3 {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #444;
+    }
 
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-        body, html {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  width: 100vw;
-}
+    input, select, button {
+      margin-top: 10px;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      background-color: #eaf4ff;
+      font-size: 16px;
+      color: #000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease;
+    }
 
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #f0f0f0; /* optional */
-}
-        body {
-            font-family: 'Roboto', sans-serif;
-            padding: 20px;
-        
-            background: #ffffff; /* Ağ fon */
-            color: #000000; /* Qara mətn */
-        }
-        input, select, button {
-            margin: 10px 0;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            background-color: #f0f8ff; /* Açıq mavi arxa fon */
-            color: #000000; /* Qara mətn */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        input:focus, select:focus, button:focus {
-            outline: none;
-            box-shadow: 0 0 10px #0000ff; /* Mavi fokus işığı */
-        }
-        button {
-            background-color: #0000ff; /* Mavi arxa fon */
-            color: #ffffff; /* Ağ mətn */
-            font-weight: bold;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #f0f0f0; /* Açıq boz fon */
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #000000; /* Qara sərhəd */
-        }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #0000ff; /* Mavi mətn */
-        }
-    </style>
+    input:focus, select:focus, button:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+    }
+
+    button {
+      background: linear-gradient(90deg, #007bff, #0056d2);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 14px;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-size: 14px;
+      color: red;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>MP3 / MP4 Downloader</h2>
-        <input type="text" id="url" placeholder="Enter YouTube URL">
+  <div class="container">
+    <h2>MP3 / MP4 Downloader</h2>
+    <input type="text" id="url" placeholder="Enter YouTube URL" />
 
-        <h3>Download MP3</h3>
-        <form id="mp3Form">
-            <button type="submit">Download MP3</button>
-        </form>
+    <h3>Download MP3</h3>
+    <form id="mp3Form">
+      <button type="submit">Download MP3</button>
+    </form>
 
-        <h3>Download MP4</h3>
-        <form id="mp4Form">
-            <select id="resolution">
-                <option value="144">144p</option>
-                <option value="240">240p</option>
-                <option value="360">360p</option>
-                <option value="480">480p</option>
-                <option value="720">720p</option>
-                <option value="1080">1080p</option>
-                <option value="1440">2K</option>
-                <option value="2160">4K</option>
-                <option value="4320">8K</option>
-            </select>
-            <button type="submit">Download MP4</button>
-        </form>
+    <h3>Download MP4</h3>
+    <form id="mp4Form">
+      <select id="resolution">
+        <option value="144">144p</option>
+        <option value="240">240p</option>
+        <option value="360">360p</option>
+        <option value="480">480p</option>
+        <option value="720">720p</option>
+        <option value="1080">1080p</option>
+        <option value="1440">2K</option>
+        <option value="2160">4K</option>
+        <option value="4320">8K</option>
+      </select>
+      <button type="submit">Download MP4</button>
+    </form>
 
-        <div id="message"></div>
+    <div id="message"></div>
+    <div class="footer">Created by Ilkin Nasibli</div>
+  </div>
 
-        <div class="footer">Created by Ilkin Nasibli</div>
-    </div>
+  <script>
+    document.getElementById("mp3Form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      let url = document.getElementById("url").value;
 
-    <script>
-        document.getElementById("mp3Form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let url = document.getElementById("url").value;
+      fetch("/download_mp3", {
+        method: "POST",
+        body: new URLSearchParams({ url: url })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.file_url) {
+          window.location.href = data.file_url;
+        } else {
+          document.getElementById("message").innerText = data.error || 'An error occurred.';
+        }
+      });
+    });
 
-            fetch("/download_mp3", {
-                method: "POST",
-                body: new URLSearchParams({ url: url })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.file_url) {
-                    window.location.href = data.file_url;
-                } else {
-                    document.getElementById("message").innerText = data.error || 'An error occurred.';
-                }
-            });
-        });
+    document.getElementById("mp4Form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      let url = document.getElementById("url").value;
+      let resolution = document.getElementById("resolution").value;
 
-        document.getElementById("mp4Form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let url = document.getElementById("url").value;
-            let resolution = document.getElementById("resolution").value;
-
-            fetch("/download_mp4", {
-                method: "POST",
-                body: new URLSearchParams({ url: url, resolution: resolution })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.file_url) {
-                    window.location.href = data.file_url;
-                } else {
-                    document.getElementById("message").innerText = data.error || 'An error occurred.';
-                }
-            });
-        });
-    </script>
+      fetch("/download_mp4", {
+        method: "POST",
+        body: new URLSearchParams({ url: url, resolution: resolution })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.file_url) {
+          window.location.href = data.file_url;
+        } else {
+          document.getElementById("message").innerText = data.error || 'An error occurred.';
+        }
+      });
+    });
+  </script>
 </body>
 </html>
