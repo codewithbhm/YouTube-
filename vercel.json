@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "app.py",
@@ -7,8 +6,9 @@
     }
   ],
   "routes": [
-    { "src": "/downloads/(.*)", "dest": "app.py" },
-    { "src": "/download_(.*)", "methods": ["POST"], "dest": "app.py" },
-    { "src": "/(.*)", "dest": "app.py" }
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
   ]
 }
