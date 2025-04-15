@@ -4,9 +4,11 @@ import os
 
 app = Flask(__name__)
 
+from flask import send_file
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_file('index.html'))
 
 @app.route('/download_mp3', methods=['POST'])
 def download_mp3():
