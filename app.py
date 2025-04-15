@@ -1,19 +1,18 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 import yt_dlp
 import os
 
 app = Flask(__name__)
 
-from flask import send_file
-
+# Ana səhifəni göstər
 @app.route('/')
 def index():
-    return send_file('index.html'))
+    return send_file('index.html')
 
+# MP3 yükləmə route
 @app.route('/download_mp3', methods=['POST'])
 def download_mp3():
     url = request.form.get('url')
-
     if not url:
         return jsonify({'error': 'URL is required'})
 
@@ -23,7 +22,7 @@ def download_mp3():
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
-            'preferredquality': '320',  # High quality MP3
+            'preferredquality': '320',
         }],
         'quiet': True
     }
@@ -36,6 +35,7 @@ def download_mp3():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# MP4 yükləmə route
 @app.route('/download_mp4', methods=['POST'])
 def download_mp4():
     url = request.form.get('url')
@@ -46,9 +46,9 @@ def download_mp4():
 
     ydl_opts = {
         'format': f'bestvideo[height<={resolution}]+bestaudio/best',
-        'outtmpl': f'downloads/%(title)s_{resolution}p.%(ext)s',  # Dynamic file name based on resolution
+        'outtmpl': f'downloads/%(title)s_{resolution}p.%(ext)s',
         'merge_output_format': 'mp4',
-        'nooverwrites': True,  # Prevent overwriting existing files
+        'nooverwrites': True,
         'quiet': True
     }
 
@@ -60,10 +60,11 @@ def download_mp4():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# Faylın yüklənməsi üçün route
 @app.route('/downloads/<path:filename>')
 def download_file(filename):
     return send_from_directory('downloads', filename, as_attachment=True)
 
-if __name__ == '__main__':
-    os.makedirs('downloads', exist_ok=True)
-    app.run(debug=True)
+# Vercel üçün handler
+os.makedirs('downloads', exist_ok=True)
+handler = app
