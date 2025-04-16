@@ -1,2 +1,5 @@
 flask
 yt_dlp
+flask_cors
+# Flask
+# requests
