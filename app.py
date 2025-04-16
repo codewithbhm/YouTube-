@@ -157,8 +157,13 @@ def download_file(filename):
 # if __name__ == "__main__":
 #     os.makedirs("downloads", exist_ok=True)
 #     app.run(debug=True)
+# if __name__ == "__main__":
+#      os.makedirs("downloads", exist_ok=True)
+#     # Flask tətbiqini Render-ə uyğun portda işə salmaq üçün
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(host="0.0.0.0", port=port)
 if __name__ == "__main__":
-     os.makedirs("downloads", exist_ok=True)
+    os.makedirs("downloads", exist_ok=True)
     # Flask tətbiqini Render-ə uyğun portda işə salmaq üçün
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
