@@ -1,1 +1,4 @@
+.youtube.com	TRUE	/	TRUE	2145916800	VISITOR_INFO1_LIVE	abcde12345
+.youtube.com	TRUE	/	TRUE	2145916800	YSC	abcdefgXYZ
+.youtube.com	TRUE	/	TRUE	2145916800	SID	ccc.xxx.yyy
 
