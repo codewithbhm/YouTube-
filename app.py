@@ -14,14 +14,29 @@ os.makedirs("downloads", exist_ok=True)
 def index():
     return send_file("index.html")
 
-# Helper function to configure yt_dlp options
+# ==========================
+# Upload cookies.txt
+# ==========================
+@app.route("/upload_cookies", methods=["POST"])
+def upload_cookies():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["file"]
+    if file.filename != "cookies.txt":
+        return jsonify({"error": "File must be named cookies.txt"}), 400
+    file.save("cookies.txt")
+    return jsonify({"message": "Cookies uploaded successfully"})
+
+# ==========================
+# yt_dlp options helper
+# ==========================
 def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None):
     options = {
         "outtmpl": filename_template,
         "quiet": True,
     }
 
-    # Attach cookies file if it exists
+    # Use cookies if available
     if os.path.exists("cookies.txt"):
         options["cookiefile"] = "cookies.txt"
 
@@ -39,7 +54,9 @@ def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None):
 
     return options
 
-# Route to download MP3
+# ==========================
+# Download MP3
+# ==========================
 @app.route("/download_mp3", methods=["POST"])
 def download_mp3():
     url = request.form.get("url")
@@ -56,7 +73,9 @@ def download_mp3():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# Route to download MP4
+# ==========================
+# Download MP4
+# ==========================
 @app.route("/download_mp4", methods=["POST"])
 def download_mp4():
     url = request.form.get("url")
@@ -76,12 +95,16 @@ def download_mp4():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# Route to serve downloaded files
+# ==========================
+# Serve downloaded files
+# ==========================
 @app.route("/downloads/<path:filename>")
 def download_file(filename):
     return send_from_directory("downloads", filename, as_attachment=True)
 
-# Start the Flask app
+# ==========================
+# Start the Flask server
+# ==========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
