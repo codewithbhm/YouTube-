@@ -14,7 +14,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Statik YouTube hesabı məlumatları (istəyə görə dəyişdirin)
 STATIC_USERNAME = "bygithubapp@gmail.com"
-STATIC_PASSWORD = "your_password_here"  # Güvənli saxlayın!
+STATIC_PASSWORD='https://t.me/endergroundlife1"  # Güvənli saxlayın!
 
 # Logger qurulması
 logging.basicConfig(level=logging.INFO)
