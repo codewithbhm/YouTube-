@@ -6,39 +6,25 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Ensure the downloads directory exists
+# Downloads qovluğunu yaradın
 os.makedirs("downloads", exist_ok=True)
 
-# Serve the homepage
+# Ana səhifəni xidmət edin
 @app.route("/")
 def index():
     return send_file("index.html")
 
-# ==========================
-# Upload cookies.txt
-# ==========================
-@app.route("/upload_cookies", methods=["POST"])
-def upload_cookies():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["file"]
-    if file.filename != "cookies.txt":
-        return jsonify({"error": "File must be named cookies.txt"}), 400
-    file.save("cookies.txt")
-    return jsonify({"message": "Cookies uploaded successfully"})
-
-# ==========================
-# yt_dlp options helper
-# ==========================
-def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None):
+# yt_dlp üçün opsiyalar yaradan funksiya (username/password əlavə edildi)
+def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None, username=None, password=None):
     options = {
         "outtmpl": filename_template,
         "quiet": True,
     }
 
-    # Use cookies if available
-    if os.path.exists("cookies.txt"):
-        options["cookiefile"] = "cookies.txt"
+    # İstifadəçi adı və şifrə varsa, əlavə edin
+    if username and password:
+        options["username"] = username
+        options["password"] = password
 
     if is_mp3:
         options["format"] = "bestaudio/best"
@@ -54,16 +40,22 @@ def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None):
 
     return options
 
-# ==========================
-# Download MP3
-# ==========================
+# MP3 yükləmə endpointi (username/password formdan alınır)
 @app.route("/download_mp3", methods=["POST"])
 def download_mp3():
     url = request.form.get("url")
-    if not url:
-        return jsonify({"error": "URL is required"})
+    username = request.form.get("username")
+    password = request.form.get("password")
 
-    ydl_opts = get_yt_dlp_options("downloads/%(title)s.%(ext)s", is_mp3=True)
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
+    ydl_opts = get_yt_dlp_options(
+        "downloads/%(title)s.%(ext)s",
+        is_mp3=True,
+        username=username,
+        password=password
+    )
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -71,40 +63,45 @@ def download_mp3():
             filename = ydl.prepare_filename(info).rsplit(".", 1)[0] + ".mp3"
             return jsonify({"file_url": "/" + filename})
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
 
-# ==========================
-# Download MP4
-# ==========================
+# MP4 yükləmə endpointi (username/password formdan alınır)
 @app.route("/download_mp4", methods=["POST"])
 def download_mp4():
     url = request.form.get("url")
     resolution = request.form.get("resolution")
+    username = request.form.get("username")
+    password = request.form.get("password")
+
     if not url or not resolution:
-        return jsonify({"error": "URL and resolution are required"})
+        return jsonify({"error": "URL and resolution are required"}), 400
+
+    try:
+        res_int = int(resolution)
+    except ValueError:
+        return jsonify({"error": "Invalid resolution"}), 400
 
     ydl_opts = get_yt_dlp_options(
-        f"downloads/%(title)s_{resolution}p.%(ext)s", resolution=resolution
+        f"downloads/%(title)s_{res_int}p.%(ext)s",
+        resolution=res_int,
+        username=username,
+        password=password
     )
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            filename = f'downloads/{info["title"]}_{resolution}p.mp4'
+            filename = f'downloads/{info["title"]}_{res_int}p.mp4'
             return jsonify({"file_url": "/" + filename})
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
 
-# ==========================
-# Serve downloaded files
-# ==========================
+# Yüklənmiş faylları xidmət edin
 @app.route("/downloads/<path:filename>")
 def download_file(filename):
     return send_from_directory("downloads", filename, as_attachment=True)
 
-# ==========================
-# Start the Flask server
-# ==========================
+# Serveri işə salın
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
