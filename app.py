@@ -1,105 +1,148 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 import yt_dlp
 import os
+import re
+import logging
 
 app = Flask(__name__)
 CORS(app)
 
 # Downloads qovluğunu yaradın
-os.makedirs("downloads", exist_ok=True)
+DOWNLOAD_DIR = "downloads"
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Ana səhifəni xidmət edin
-@app.route("/")
-def index():
-    return send_file("index.html")
+# Statik YouTube hesabı məlumatları (istəyə görə dəyişdirin)
+STATIC_USERNAME = "bygithubapp@gmail.com"
+STATIC_PASSWORD = "your_password_here"  # Güvənli saxlayın!
 
-# yt_dlp üçün opsiyalar yaradan funksiya (username/password əlavə edildi)
-def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None, username=None, password=None):
+# Logger qurulması
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("yt_dlp_flask")
+
+# Fayl adı üçün təhlükəsiz string generatoru
+def sanitize_filename(name):
+    # Sadə regex ilə təhlükəsiz fayl adı yaradılır
+    return re.sub(r'[^a-zA-Z0-9_\-\. ]', '_', name)
+
+# yt_dlp opsiyalarını qaytaran funksiya
+def get_yt_dlp_options(filename_template, is_mp3=False, resolution=None):
     options = {
         "outtmpl": filename_template,
         "quiet": True,
+        "username": STATIC_USERNAME,
+        "password": STATIC_PASSWORD,
+        "nocheckcertificate": True,  # SSL problemlərinə qarşı (istəyə bağlı)
+        "noprogress": True,
+        "ignoreerrors": False,
+        "retries": 3,
+        "fragment_retries": 3,
     }
 
-    # İstifadəçi adı və şifrə varsa, əlavə edin
-    if username and password:
-        options["username"] = username
-        options["password"] = password
-
     if is_mp3:
-        options["format"] = "bestaudio/best"
-        options["postprocessors"] = [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "320",
-        }]
+        options.update({
+            "format": "bestaudio/best",
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "320",
+            }],
+            "postprocessor_args": ["-ar", "44100"],
+        })
     else:
-        options["format"] = f"bestvideo[height<={resolution}]+bestaudio/best"
-        options["merge_output_format"] = "mp4"
-        options["nooverwrites"] = True
+        options.update({
+            "format": f"bestvideo[height<={resolution}]+bestaudio/best",
+            "merge_output_format": "mp4",
+            "nooverwrites": True,
+        })
 
     return options
 
-# MP3 yükləmə endpointi (username/password formdan alınır)
+# Ana səhifə
+@app.route("/")
+def index():
+    return "YouTube Downloader API is running."
+
+# MP3 yükləmə endpointi
 @app.route("/download_mp3", methods=["POST"])
 def download_mp3():
-    url = request.form.get("url")
-    username = request.form.get("username")
-    password = request.form.get("password")
-
+    url = request.form.get("url", "").strip()
     if not url:
         return jsonify({"error": "URL is required"}), 400
 
     ydl_opts = get_yt_dlp_options(
-        "downloads/%(title)s.%(ext)s",
-        is_mp3=True,
-        username=username,
-        password=password
+        os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s"),
+        is_mp3=True
     )
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
+            if not info:
+                raise Exception("Video info not found")
+
             filename = ydl.prepare_filename(info).rsplit(".", 1)[0] + ".mp3"
-            return jsonify({"file_url": "/" + filename})
+            safe_filename = sanitize_filename(os.path.basename(filename))
+            safe_filepath = os.path.join(DOWNLOAD_DIR, safe_filename)
+
+            # Faylın adını təhlükəsiz formada dəyişirik (əgər fərqlidirsə)
+            if filename != safe_filepath:
+                os.rename(filename, safe_filepath)
+
+            logger.info(f"MP3 downloaded: {safe_filepath}")
+            return jsonify({"file_url": f"/downloads/{safe_filename}"})
     except Exception as e:
+        logger.error(f"MP3 download error: {e}")
         return jsonify({"error": str(e)}), 500
 
-# MP4 yükləmə endpointi (username/password formdan alınır)
+# MP4 yükləmə endpointi
 @app.route("/download_mp4", methods=["POST"])
 def download_mp4():
-    url = request.form.get("url")
-    resolution = request.form.get("resolution")
-    username = request.form.get("username")
-    password = request.form.get("password")
+    url = request.form.get("url", "").strip()
+    resolution = request.form.get("resolution", "").strip()
 
     if not url or not resolution:
         return jsonify({"error": "URL and resolution are required"}), 400
 
     try:
         res_int = int(resolution)
+        if res_int <= 0:
+            raise ValueError
     except ValueError:
         return jsonify({"error": "Invalid resolution"}), 400
 
     ydl_opts = get_yt_dlp_options(
-        f"downloads/%(title)s_{res_int}p.%(ext)s",
-        resolution=res_int,
-        username=username,
-        password=password
+        os.path.join(DOWNLOAD_DIR, f"%(title)s_{res_int}p.%(ext)s"),
+        resolution=res_int
     )
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            filename = f'downloads/{info["title"]}_{res_int}p.mp4'
-            return jsonify({"file_url": "/" + filename})
+            if not info:
+                raise Exception("Video info not found")
+
+            filename = os.path.join(DOWNLOAD_DIR, f'{info["title"]}_{res_int}p.mp4')
+            safe_filename = sanitize_filename(os.path.basename(filename))
+            safe_filepath = os.path.join(DOWNLOAD_DIR, safe_filename)
+
+            if filename != safe_filepath:
+                os.rename(filename, safe_filepath)
+
+            logger.info(f"MP4 downloaded: {safe_filepath}")
+            return jsonify({"file_url": f"/downloads/{safe_filename}"})
     except Exception as e:
+        logger.error(f"MP4 download error: {e}")
         return jsonify({"error": str(e)}), 500
 
 # Yüklənmiş faylları xidmət edin
 @app.route("/downloads/<path:filename>")
 def download_file(filename):
-    return send_from_directory("downloads", filename, as_attachment=True)
+    safe_filename = sanitize_filename(filename)
+    file_path = os.path.join(DOWNLOAD_DIR, safe_filename)
+    if not os.path.isfile(file_path):
+        abort(404)
+    return send_from_directory(DOWNLOAD_DIR, safe_filename, as_attachment=True)
 
 # Serveri işə salın
 if __name__ == "__main__":
